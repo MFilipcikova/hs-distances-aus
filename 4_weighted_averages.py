@@ -21,14 +21,17 @@ if __name__ == '__main__':
              'gp_bulk_billing_duration': 'float32',
              'gp_bulk_billing_distance': 'float32',
              'emergency_duration': 'float32',
-             'emergency_distance': 'float32'}
+             'emergency_distance': 'float32',
+             'pharmacy_duration': 'float32',
+             'pharmacy_distance': 'float32'}
     df = pd.read_csv('./data/mb_2021_distances.csv', usecols=dtype.keys(), dtype=dtype)
 
     # fill the empty cells
     columns_to_average = ['hospital_duration', 'hospital_distance',
                           'gp_duration', 'gp_distance',
                           'gp_bulk_billing_duration', 'gp_bulk_billing_distance',
-                          'emergency_duration', 'emergency_distance']
+                          'emergency_duration', 'emergency_distance',
+                          'pharmacy_duration', 'pharmacy_distance']
     df[columns_to_average] = df[columns_to_average].fillna(1e10)
 
     # compute weighted averages

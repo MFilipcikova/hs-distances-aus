@@ -94,7 +94,7 @@ if __name__ == '__main__':
     dict_trees = pickle.load(open('./data/dict_trees', 'rb'))
 
     # iterate over health service type
-    for health_service in ['hospital', 'gp', 'gp_bulk_billing', 'emergency']:
+    for health_service in ['hospital', 'gp', 'gp_bulk_billing', 'emergency', 'pharmacy']:
         tree = dict_trees[health_service]
 
         # store durations, distances and coordinates
