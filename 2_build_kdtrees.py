@@ -16,8 +16,11 @@ if __name__ == '__main__':
              'pl_latitude': 'float32',
              'pl_longitude': 'float32'}
     dp = pd.read_excel('./data/nhsd_pharmacies.xlsx', usecols=dtype.keys(), dtype=dtype)
-    dp = dp.rename(columns={'svc_classification': 'Healthcare Service Type', 'pl_latitude': 'Location Latitude', 'pl_longitude': 'Location Longitude'})
-    df = df.append(dp)
+    dp = dp.rename(columns={'svc_classification': 'Healthcare Service Type',
+                            'pl_latitude': 'Location Latitude',
+                            'pl_longitude': 'Location Longitude'})
+    dp = dp.dropna()
+    df = pd.concat([df, dp], axis=0)
 
     # create dataframes for various services
     df_hospital = df[df['Healthcare Service Type'] == 'Hospital service']

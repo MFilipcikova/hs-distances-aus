@@ -3,7 +3,8 @@ import pandas as pd
 
 
 def weighted(x, cols, w='Person'):
-    return pd.Series(np.ma.average(x[cols], weights=x[w], axis=0), cols)
+    data = np.ma.masked_array(x[cols], np.isnan(x[cols]))
+    return pd.Series(np.ma.average(data, weights=x[w], axis=0), cols)
 
 
 if __name__ == '__main__':
@@ -32,7 +33,6 @@ if __name__ == '__main__':
                           'gp_bulk_billing_duration', 'gp_bulk_billing_distance',
                           'emergency_duration', 'emergency_distance',
                           'pharmacy_duration', 'pharmacy_distance']
-    df[columns_to_average] = df[columns_to_average].fillna(1e10)
 
     # compute weighted averages
     df_sa2_grouped = df.groupby(['SA2_CODE21'])
@@ -51,14 +51,6 @@ if __name__ == '__main__':
     df_poa = pd.concat([df_poa, df_poa_grouped.agg(agg_dict)], axis=1)
     df_poa_mmm = pd.concat([df_poa_mmm, df_poa_mmm_grouped.agg(agg_dict)], axis=1)
     df_ste_mmm = pd.concat([df_ste_mmm, df_ste_mmm_grouped.agg({'Person': 'sum'})], axis=1)
-
-    # map values for which no route was found to NaN
-    # this is the case only for trying to get to a bulk billing GP from King Island (TAS)
-    columns_to_replace = ['gp_bulk_billing_duration', 'gp_bulk_billing_distance']
-    df_sa2[columns_to_replace] = df_sa2[columns_to_replace].replace(to_replace=1e10, value=np.nan)
-    df_poa[columns_to_replace] = df_poa[columns_to_replace].replace(to_replace=1e10, value=np.nan)
-    df_poa_mmm[columns_to_replace] = df_poa_mmm[columns_to_replace].replace(to_replace=1e10, value=np.nan)
-    df_ste_mmm[columns_to_replace] = df_ste_mmm[columns_to_replace].replace(to_replace=1e10, value=np.nan)
 
     # turn index into column
     df_sa2.reset_index(inplace=True)

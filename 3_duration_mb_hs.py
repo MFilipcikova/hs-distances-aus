@@ -4,7 +4,6 @@ import pandas as pd
 import re
 import requests as req
 from tqdm import tqdm
-from geopy import distance as gpdist
 
 
 # return duration and distance to health service closest to mesh block coordinates
@@ -24,55 +23,22 @@ def get_metrics(row, tree):
 
         # compute durations using OSRM table service
         url = ('http://127.0.0.1:5000/table/v1/driving/' + str(row['longitude']) + ',' + str(row['latitude']) + ';'
-               + health_service_coordinates_str + '?sources=0')
+               + health_service_coordinates_str + '?sources=0&annotations=duration,distance')
         response = req.get(url)
 
-        # get closest health service (in terms of trip duration)
-        s = response.text
-        start = '"durations":[[0,'
-        end = ']]'
-        durations = s[s.find(start) + len(start):s.rfind(end)].split(',')
-        durations = [d if d != 'null' else '1e10' for d in durations]  # map nulls to very high duration in seconds
-        durations = np.array(durations, dtype=np.float32)
-        index_min_duration = durations.argmin()
-
-        # compute duration and distance to closest health service using OSRM route service
-        longitude_closest = health_service_coordinates[index_min_duration, 0]
-        latitude_closest = health_service_coordinates[index_min_duration, 1]
-        url = ('http://127.0.0.1:5000/route/v1/driving/' + str(row['longitude']) + ',' + str(row['latitude']) + ';'
-               + str(longitude_closest) + ',' + str(latitude_closest) + '?overview=false')
-        response = req.get(url)
-
-        # get duration and distance to closest health service
-        s = response.text
-        # extract substring with duration and distance
-        start = '"weight_name":"routability"'
-        end = '"waypoints"'
-        s = s[s.find(start) + len(start):s.rfind(end)]
-        # extract duration and distance
-        start = '"duration":'
-        end = ',"distance"'
-        min_duration = s[s.find(start) + len(start):s.rfind(end)]
-        start = '"distance":'
-        end = '}],'
-        min_distance = s[s.find(start) + len(start):s.rfind(end)]
-
-        try:
-            # convert strings to numbers if successful
-            min_duration = float(min_duration)
-            min_distance = float(min_distance)
-        except:
-            # otherwise compute 'as the crow flies' distance between MB and health service
-            c_lon, c_lat = row["longitude"], row["latitude"]
-            h_lon = health_service_coordinates[index_min_duration, 0]
-            h_lat = health_service_coordinates[index_min_duration, 1]
-            dist = gpdist.distance((c_lat, c_lon), (h_lat, h_lon)).m
-            print(f'Warning, cannot find driving route between {(str(c_lat), str(c_lon))} and '
-                  f'{(str(h_lat), str(h_lon))}. The distance between the two is {dist}m.')
-            if dist < 100:  # no route found because MB centroid and health service are very close
-                min_duration, min_distance = 0, 0
-            else:  # no route found between MB and health service, this can be the case for islands
-                min_duration, min_distance = np.nan, np.nan
+        # get closest health service (in terms of trip duration), duration and distance to it
+        s = response.json()
+        if s['code'] == 'Ok':
+            try:
+                index_min_duration = np.nanargmin(np.array(s['durations'][0][1:], dtype=float))
+                min_duration = s['durations'][0][index_min_duration + 1]
+                min_distance = s['distances'][0][index_min_duration + 1]
+                longitude_closest = s['destinations'][index_min_duration + 1]['location'][0]
+                latitude_closest = s['destinations'][index_min_duration + 1]['location'][1]
+            except ValueError:  # all nan durations
+                return np.nan, np.nan, np.nan, np.nan
+        else:
+            print(s)
 
     return min_duration, min_distance, longitude_closest, latitude_closest
 
