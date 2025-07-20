@@ -15,8 +15,10 @@ if __name__ == '__main__':
              'MMM2019': 'float32',
              'POA_CODE_2021': 'int64',
              'Person': 'int32',
-             'hospital_duration': 'float32',
-             'hospital_distance': 'float32',
+             'hospital_public_duration': 'float32',
+             'hospital_public_distance': 'float32',
+             'hospital_private_duration': 'float32',
+             'hospital_private_distance': 'float32',
              'gp_duration': 'float32',
              'gp_distance': 'float32',
              'gp_bulk_billing_duration': 'float32',
@@ -28,7 +30,8 @@ if __name__ == '__main__':
     df = pd.read_csv('./data/mb_2021_distances.csv', usecols=dtype.keys(), dtype=dtype)
 
     # fill the empty cells
-    columns_to_average = ['hospital_duration', 'hospital_distance',
+    columns_to_average = ['hospital_public_duration', 'hospital_public_distance',
+                          'hospital_private_duration', 'hospital_private_distance',
                           'gp_duration', 'gp_distance',
                           'gp_bulk_billing_duration', 'gp_bulk_billing_distance',
                           'emergency_duration', 'emergency_distance',
